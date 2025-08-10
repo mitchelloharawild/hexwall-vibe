@@ -1,0 +1,117 @@
+---
+title: "Using hexwall for Hexagonal Image Tiles"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using hexwall for Hexagonal Image Tiles}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(htmltools)
+library(hexwall)
+```
+
+## Introduction
+
+The `hexwall` package provides an easy way to create hexagonal tile patterns for displaying images using CSS transforms and htmltools. This is particularly useful for showcasing package logos, project thumbnails, or any collection of square/hexagonal images.
+
+## Basic Usage
+
+The main function is `hextile()`, which takes a vector of image paths and creates a hexagonal tiling pattern:
+
+```{r basic-usage}
+# Sample image paths (you would replace these with your actual image paths)
+sample_images <- c(
+  "path/to/image1.svg",
+  "path/to/image2.svg", 
+  "path/to/image3.svg",
+  "path/to/image4.svg",
+  "path/to/image5.svg"
+)
+
+# Create basic hex tile
+hex_display <- hextile(sample_images)
+```
+
+## Adding Custom CSS Classes
+
+You can add additional CSS classes for custom styling:
+
+```{r custom-classes}
+# Add custom classes
+custom_hex <- hextile(sample_images, class = c("my-theme", "large-tiles"))
+```
+
+## HTML Output
+
+The function generates clean HTML structure that matches the expected format:
+
+```html
+<div class="hextile clr">
+  <ul>
+    <li><img src="image1.svg"></li>
+    <li><img src="image2.svg"></li>
+    <li><img src="image3.svg"></li>
+    <!-- ... more items ... -->
+  </ul>
+</div>
+```
+
+## CSS Dependency
+
+The package automatically includes the hex.css dependency, which provides:
+
+- Hexagonal shape transforms using CSS `rotate()` and `skew()`
+- Responsive tiling layout that adjusts to different screen sizes
+- Proper positioning for creating the honeycomb pattern
+
+## Integration with R Markdown and Quarto
+
+The hexwall output integrates seamlessly with R Markdown and Quarto documents:
+
+````
+```{r, results='asis'}
+my_hex_display <- hextile(c("logo1.png", "logo2.png", "logo3.png"))
+my_hex_display
+```
+````
+
+## Tips for Best Results
+
+1. **Image Format**: SVG images work best as they scale cleanly at any size
+2. **Aspect Ratio**: Square or hexagonal images look best in the hex tiles
+3. **File Paths**: Use relative paths for portability across different environments
+4. **Number of Images**: The layout works well with any number of images, automatically flowing to new rows
+
+## Example with Real Images
+
+Here's a complete example using actual package hex stickers:
+
+```{r real-example, eval=FALSE}
+library(htmltools)
+library(hexwall)
+
+# URLs to R package hex stickers
+hex_stickers <- c(
+  "https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/dplyr.svg",
+  "https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/ggplot2.svg",
+  "https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/readr.svg",
+  "https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/purrr.svg",
+  "https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/tibble.svg",
+  "https://raw.githubusercontent.com/rstudio/hex-stickers/master/SVG/tidyr.svg"
+)
+
+# Create and display the hex wall
+tidyverse_hex <- hextile(hex_stickers)
+browsable(tidyverse_hex)
+```
+
+This creates a beautiful hexagonal display of the tidyverse package logos!
