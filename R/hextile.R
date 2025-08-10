@@ -1,7 +1,8 @@
 #' Create a hexagon tile pattern
 #'
 #' Creates a hexagonal tile pattern using hex.css styling. Each image is displayed
-#' in a hexagonal shape arranged in a tiling pattern.
+#' in a hexagonal shape arranged in a tiling pattern. Images are embedded as base64
+#' data URIs for completely self-contained HTML output.
 #'
 #' @param packages Character vector of package names to automatically find hex logos for.
 #'   Logos are searched in the standard location: man/figures/logo.(png|jpg|svg)
@@ -56,8 +57,11 @@ hex_wall <- function(packages = NULL, images = NULL, class = NULL, ...) {
   # Validate that images exist or are URLs
   validate_images(all_images)
   
-  # Create list items for each image
-  list_items <- lapply(all_images, function(img) {
+  # Convert all images to base64 data URIs
+  base64_images <- convert_images_to_base64(all_images)
+  
+  # Create list items for each base64 image
+  list_items <- lapply(base64_images, function(img) {
     htmltools::tags$li(
       htmltools::tags$img(src = img)
     )
@@ -78,6 +82,125 @@ hex_wall <- function(packages = NULL, images = NULL, class = NULL, ...) {
   
   # Attach the CSS dependency
   attach_hex_dependency(tag)
+}
+
+#' Convert images to base64 data URIs
+#'
+#' Converts local image files and remote URLs to base64 data URIs for embedding
+#' directly in HTML
+#'
+#' @param images Character vector of image paths/URLs
+#' @return Character vector of base64 data URIs
+#' @keywords internal
+convert_images_to_base64 <- function(images) {
+  base64_images <- character(length(images))
+  
+  for (i in seq_along(images)) {
+    img <- images[i]
+    
+    tryCatch({
+      if (grepl("^https?://", img)) {
+        # Handle remote URLs
+        base64_images[i] <- url_to_base64(img)
+      } else {
+        # Handle local files
+        base64_images[i] <- file_to_base64(img)
+      }
+    }, error = function(e) {
+      warning(glue::glue("Failed to convert image '{img}' to base64: {conditionMessage(e)}"))
+      # Fallback to original path/URL if conversion fails
+      base64_images[i] <- img
+    })
+  }
+  
+  base64_images
+}
+
+#' Convert local file to base64 data URI
+#'
+#' @param file_path Path to local image file
+#' @return Base64 data URI string
+#' @keywords internal
+file_to_base64 <- function(file_path) {
+  # Read file as binary
+  file_content <- readBin(file_path, "raw", file.info(file_path)$size)
+  
+  # Determine MIME type from file extension
+  mime_type <- get_mime_type(file_path)
+  
+  # Convert to base64
+  base64_content <- base64enc::base64encode(file_content)
+  
+  # Create data URI
+  paste0("data:", mime_type, ";base64,", base64_content)
+}
+
+#' Convert remote URL to base64 data URI
+#'
+#' @param url Remote image URL
+#' @return Base64 data URI string
+#' @keywords internal
+url_to_base64 <- function(url) {
+  # Create temporary file
+  temp_file <- tempfile()
+  on.exit(unlink(temp_file), add = TRUE)
+  
+  # Download file
+  tryCatch({
+    utils::download.file(url, temp_file, mode = "wb", quiet = TRUE)
+  }, error = function(e) {
+    stop(glue::glue("Failed to download image from URL: {url}"))
+  })
+  
+  # Determine MIME type from URL or downloaded file
+  mime_type <- get_mime_type_from_url(url)
+  
+  # Read and convert to base64
+  file_content <- readBin(temp_file, "raw", file.info(temp_file)$size)
+  base64_content <- base64enc::base64encode(file_content)
+  
+  # Create data URI
+  paste0("data:", mime_type, ";base64,", base64_content)
+}
+
+#' Get MIME type from file path
+#'
+#' @param file_path Path to file
+#' @return MIME type string
+#' @keywords internal
+get_mime_type <- function(file_path) {
+  ext <- tolower(tools::file_ext(file_path))
+  
+  switch(ext,
+    "png" = "image/png",
+    "jpg" = "image/jpeg",
+    "jpeg" = "image/jpeg", 
+    "svg" = "image/svg+xml",
+    "gif" = "image/gif",
+    "webp" = "image/webp",
+    "image/png" # Default fallback
+  )
+}
+
+#' Get MIME type from URL
+#'
+#' @param url Image URL
+#' @return MIME type string
+#' @keywords internal
+get_mime_type_from_url <- function(url) {
+  # Extract extension from URL (ignoring query parameters)
+  url_path <- strsplit(url, "\\?")[[1]][1]  # Remove query string
+  ext <- tolower(tools::file_ext(url_path))
+  
+  switch(ext,
+    "png" = "image/png",
+    "jpg" = "image/jpeg",
+    "jpeg" = "image/jpeg",
+    "svg" = "image/svg+xml", 
+    "gif" = "image/gif",
+    "webp" = "image/webp",
+    "image/png" # Default fallback
+  )
 }
 
 #' Find package logos in standard locations

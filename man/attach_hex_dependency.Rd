@@ -2,7 +2,7 @@
 % Please edit documentation in R/hextile.R
 \name{attach_hex_dependency}
 \alias{attach_hex_dependency}
-\title{Attach hex.css dependency to hextile}
+\title{Attach hex.css dependency to hex_wall}
 \usage{
 attach_hex_dependency(tag)
 }
@@ -13,6 +13,6 @@ attach_hex_dependency(tag)
 The tag with hex.css dependency attached
 }
 \description{
-Attach hex.css dependency to hextile
+Attach hex.css dependency to hex_wall
 }
 \keyword{internal}
